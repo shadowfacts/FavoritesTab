@@ -7,11 +7,11 @@ import net.minecraft.client.settings.KeyBinding
 import net.minecraft.creativetab.CreativeTabs
 import net.minecraft.init.Items
 import net.minecraft.inventory.IInventory
+import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.CompressedStreamTools
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.nbt.NBTTagList
-import net.minecraft.util.NonNullList
 import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.client.settings.KeyConflictContext
 import net.minecraftforge.client.settings.KeyModifier
@@ -51,8 +51,8 @@ object FavoritesTab {
 		method.setAccessible(true)
 		method
 	}
-	var getJEIStack = {
-		ItemStack.EMPTY
+	var getJEIStack: () -> ItemStack? = {
+		null
 	}
 
 	@Mod.EventHandler
@@ -71,7 +71,7 @@ object FavoritesTab {
 			favorites.clear()
 			list.forEach {
 				if (it is NBTTagCompound) {
-					favorites.add(ItemStack(it))
+					favorites.add(ItemStack.loadItemStackFromNBT(it))
 				}
 			}
 		} else {
@@ -96,11 +96,11 @@ object FavoritesTab {
 
 	object TabFavorites: CreativeTabs("favorites") {
 
-		override fun getTabIconItem(): ItemStack {
-			return ItemStack(Items.NETHER_STAR)
+		override fun getTabIconItem(): Item {
+			return Items.NETHER_STAR
 		}
 
-		override fun displayAllRelevantItems(list: NonNullList<ItemStack>) {
+		override fun displayAllRelevantItems(list: MutableList<ItemStack>) {
 			list.addAll(favorites)
 		}
 
@@ -120,7 +120,7 @@ object FavoritesTab {
 			if (System.currentTimeMillis() - lastOp < 150) return
 
 			var mode = OpMode.ADD
-			var stack: ItemStack = ItemStack.EMPTY
+			var stack: ItemStack? = null
 
 			val gui = event.gui
 			var onComplete: () -> Unit = {}
@@ -129,8 +129,8 @@ object FavoritesTab {
 				val favoritesTabOpen = gui is GuiContainerCreative && gui.selectedTabIndex == TabFavorites.tabIndex
 				mode = if (favoritesTabOpen && gui.slotUnderMouse?.inventory == creativeInv) OpMode.REMOVE else OpMode.ADD
 				stack = gui.slotUnderMouse?.stack?.copy()?.apply {
-					count = 1
-				} ?: ItemStack.EMPTY
+					stackSize = 1
+				}
 				if (favoritesTabOpen) {
 					onComplete = {
 						setCurrentCreativeTab.invoke(gui, TabFavorites)
@@ -139,11 +139,11 @@ object FavoritesTab {
 					onComplete = {}
 				}
 			}
-			if (stack.isEmpty) {
+			if (stack == null) {
 				stack = getJEIStack()
 			}
 
-			if (!stack.isEmpty) {
+			if (stack != null) {
 				when (mode) {
 					OpMode.ADD -> {
 						if (favorites.containsStack(stack)) return
@@ -158,7 +158,6 @@ object FavoritesTab {
 
 				onComplete()
 				save()
-				event.isCanceled = true
 				lastOp = System.currentTimeMillis()
 			}
 		}
