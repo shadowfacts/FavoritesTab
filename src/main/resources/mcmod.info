@@ -1,0 +1,16 @@
+[
+	{
+	  "modid": "favoritestab",
+	  "name": "Favorites Tab",
+	  "description": "Adds a creative tab populated by user-favorited items.",
+	  "version": "${version}",
+	  "mcversion": "${mcversion}",
+	  "url": "http://github.com/shadowfacts/FavoritesTab",
+	  "updateUrl": "",
+	  "authorList": ["Shadowfacts"],
+	  "credits": "",
+	  "logoFile": "",
+	  "screenshots": [],
+	  "dependencies": []
+	}
+]
